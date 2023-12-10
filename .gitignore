@@ -11,6 +11,7 @@
 
 # Logs Debug files
 Debug/
+Release/
 wzr_log.txt
 
 # Built Visual Studio Code Extensions
