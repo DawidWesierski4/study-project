@@ -18,7 +18,7 @@ using namespace std;
 #include "graphics.h"
 #include "net.h"
 
-
+volatile int negotiation_status = -1;
 bool if_different_skills = true;          // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
 // zbierania gotówki i paliwa)
 
@@ -56,12 +56,19 @@ int cursor_x, cursor_y;                         // polo¿enie kursora myszki w c
 
 extern float TransferSending(int ID_receiver, int transfer_type, float transfer_value);
 
+
+
 enum frame_types {
-	OBJECT_STATE, ITEM_TAKING, ITEM_RENEWAL, COLLISION, TRANSFER
+	OBJECT_STATE, ITEM_TAKING, ITEM_RENEWAL, COLLISION, TRANSFER, NEGOTIATION
 };
 
 enum transfer_types { MONEY, FUEL};
-
+enum negotiation_statuses {
+	ASK = FUEL + 1,
+	AKCEPTED,
+	REFUSED,
+	RENEGOTIATED
+};
 struct Frame
 {
 	int iID;
@@ -171,6 +178,22 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 				else if (frame.transfer_type == FUEL)
 					my_vehicle->state.amount_of_fuel += frame.transfer_value;
 
+				// nale¿a³oby jeszcze przelew potwierdziæ (w UDP ramki mog¹ byæ gubione!)
+			}
+			break;
+		}
+		case NEGOTIATION:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
+		{
+			char message1[256];
+			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			{
+				if (frame.transfer_type == MONEY) 
+				sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", frame.transfer_value);
+				if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
+					negotiation_status = ASK;
+					int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+				}
+				
 				// nale¿a³oby jeszcze przelew potwierdziæ (w UDP ramki mog¹ byæ gubione!)
 			}
 			break;
@@ -315,7 +338,6 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 	frame.transfer_value = transfer_value;
 	frame.iID = my_vehicle->iID;
 
-	// tutaj nale¿a³oby uzyskaæ potwierdzenie przekazu zanim sumy zostan¹ odjête
 	if (transfer_type == MONEY)
 	{
 		if (my_vehicle->state.money < transfer_value)
@@ -337,16 +359,20 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 	return frame.transfer_value;
 }
 
-
-
-
+void Negotiate(int ID_receiver, int transfer_type, float transfer_value, HWND sub_window)
+{
+	if (!sub_window) {
+		sub_window = CreateWindowEx(0, "SubWindowClass", "NEGOCJACJE", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+			200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL), NULL);
+	}
+}
 
 //deklaracja funkcji obslugi okna
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
+HWND sub_window;
 HWND main_window;                   // uchwyt do okna aplikacji
-HWND sub_window;  // Declare a handle for the subwindow
 
 LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
 	static HWND edit_control;  // Static to persist between messages
@@ -354,12 +380,20 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 	char moneyBuffer[256];
 	float moneyValue;
 	char message1[256];
+	Frame frame;
+	frame.frame_type = NEGOTIATION;
 
 	switch (message) {
 	case WM_CREATE:
 		// Create and show the money input dialog when a command is received (e.g., button click)
-		edit_control = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
-		CreateWindow("BUTTON", "Negocjacuj", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+		if (negotiation_status == -1) {
+			edit_control = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
+			CreateWindow("BUTTON", "Negocjacuj", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+		}
+		else if (negotiation_status == ASK) {
+			edit_control = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
+			CreateWindow("BUTTON", "Renegocjuj", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+		}
 		break;
 
 	case WM_COMMAND:
@@ -368,14 +402,35 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 			GetWindowText(edit_control, moneyBuffer, sizeof(moneyBuffer));
 			moneyValue = atof(moneyBuffer);
 
-			// Display a message box with the entered money value
-			sprintf(message1, "Entered Money Value: %.2f", moneyValue);
-			MessageBox(hwnd, message1, "Entered Value", MB_OK);
+			if (moneyValue < 1) {
+				frame.transfer_value = moneyValue;
+				sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", moneyValue);
+				if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
+					negotiation_status = ASK;
+					int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+
+
+					while (negotiation_status != ASK) {}
+
+					if (negotiation_status == AKCEPTED) {
+						sprintf(message1, "ZAKCEPTOWAŁ", moneyValue);
+						MessageBox(hwnd, message1, "zakceptował", MB_OK);
+					}
+					else if (negotiation_status == REFUSED) {
+						sprintf(message1, "ODRZUCIŁ", moneyValue);
+						MessageBox(hwnd, message1, "nie zakceptował cymbał", MB_OK);
+					}
+				}
+			} else {
+				sprintf(message1, "Wartość: %.2f jest zbyt wysoka", moneyValue);
+				MessageBox(hwnd, message1, "za wysoko 0 - 1", MB_OK);
+			}
 		}
 		break;
 
 	case WM_DESTROY:
 		DestroyWindow(hwnd);
+
 		break;
 
 	default:
@@ -807,10 +862,8 @@ void MessagesHandling(UINT message_type, WPARAM wParam, LPARAM lParam)
 				{
 					MovableObject* ob = it->second;
 					if (ob->if_selected)
-						if (!sub_window) {
-							sub_window = CreateWindowEx(0, "SubWindowClass", "SubWindow", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-								200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL), NULL);
-						}
+						Negotiate(ob->iID, MONEY, 100, sub_window);
+		
 				}
 			}
 			break;

@@ -9,7 +9,6 @@
 #include <arpa/inet.h>  
 #endif
 
-
 class multicast_net
 {
 public:
