@@ -346,6 +346,44 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
 HWND main_window;                   // uchwyt do okna aplikacji
+HWND sub_window;  // Declare a handle for the subwindow
+
+LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
+	static HWND edit_control;  // Static to persist between messages
+
+	char moneyBuffer[256];
+	float moneyValue;
+	char message1[256];
+
+	switch (message) {
+	case WM_CREATE:
+		// Create and show the money input dialog when a command is received (e.g., button click)
+		edit_control = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
+		CreateWindow("BUTTON", "Negocjacuj", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+		break;
+
+	case WM_COMMAND:
+		if (LOWORD(w_param) == 1) {
+			// Get the entered value from the edit control
+			GetWindowText(edit_control, moneyBuffer, sizeof(moneyBuffer));
+			moneyValue = atof(moneyBuffer);
+
+			// Display a message box with the entered money value
+			sprintf(message1, "Entered Money Value: %.2f", moneyValue);
+			MessageBox(hwnd, message1, "Entered Value", MB_OK);
+		}
+		break;
+
+	case WM_DESTROY:
+		DestroyWindow(hwnd);
+		break;
+
+	default:
+		return DefWindowProc(hwnd, message, w_param, l_param);
+	}
+
+	return DefWindowProc(hwnd, message, w_param, l_param);
+}
 HDC g_context = NULL;        // uchwyt kontekstu graficznego
 
 bool terrain_edition_mode = 0;
@@ -380,6 +418,14 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
 	//teraz rejestrujemy klasę okna głównego
 	RegisterClass(&window_class);
+
+	// Register a class for the subwindow
+	WNDCLASS subWindowClass = {};
+	subWindowClass.lpfnWndProc = SubWindowProc;
+	subWindowClass.hInstance = hInstance;
+	subWindowClass.lpszClassName = "SubWindowClass";
+
+	RegisterClass(&subWindowClass);
 
 	/*tworzymy main_window główne
 	main_window będzie miało zmienne rozmiary, listwę z tytułem, menu systemowym
@@ -749,6 +795,22 @@ void MessagesHandling(UINT message_type, WPARAM wParam, LPARAM lParam)
 					MovableObject *ob = it->second;
 					if (ob->if_selected)
 						float ilosc_p = TransferSending(ob->iID, MONEY, 100);
+				}
+			}
+			break;
+		}
+		case 'P':
+		{
+			for (map<int, MovableObject*>::iterator it = network_vehicles.begin(); it != network_vehicles.end(); ++it)
+			{
+				if (it->second)
+				{
+					MovableObject* ob = it->second;
+					if (ob->if_selected)
+						if (!sub_window) {
+							sub_window = CreateWindowEx(0, "SubWindowClass", "SubWindow", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+								200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL), NULL);
+						}
 				}
 			}
 			break;
