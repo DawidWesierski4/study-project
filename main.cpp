@@ -190,11 +190,9 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 				if (frame.transfer_type == MONEY) 
 				sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", frame.transfer_value);
 				if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
-					negotiation_status = ASK;
-					int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+					negotiation_status = AKCEPTED;
 				}
 				
-				// nale¿a³oby jeszcze przelew potwierdziæ (w UDP ramki mog¹ byæ gubione!)
 			}
 			break;
 		}
@@ -382,6 +380,7 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 	char message1[256];
 	Frame frame;
 	frame.frame_type = NEGOTIATION;
+	frame.transfer_type = MONEY;
 
 	switch (message) {
 	case WM_CREATE:
