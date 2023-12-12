@@ -19,7 +19,9 @@ using namespace std;
 #include "net.h"
 
 volatile int negotiation_status = -1;
-bool if_different_skills = true;          // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
+volatile int G_ID_receiver = 1;
+bool if_different_skills = true;     
+// czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
 // zbierania gotówki i paliwa)
 
 FILE *f = fopen("vct_log.txt", "w");     // plik do zapisu informacji testowych
@@ -360,8 +362,9 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 void Negotiate(int ID_receiver, int transfer_type, float transfer_value, HWND sub_window)
 {
 	if (!sub_window) {
+		G_ID_receiver = ID_receiver;
 		sub_window = CreateWindowEx(0, "SubWindowClass", "NEGOCJACJE", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-			200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL), NULL);
+			200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL),  &ID_receiver);
 	}
 }
 
@@ -380,6 +383,7 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 	char message1[256];
 	Frame frame;
 	frame.frame_type = NEGOTIATION;
+	frame.iID_receiver = G_ID_receiver;
 	frame.transfer_type = MONEY;
 
 	switch (message) {
