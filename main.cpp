@@ -191,8 +191,7 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
 				if (frame.transfer_type == MONEY)
-					negotiation_status = ASK;
-				
+					negotiation_status = ASKED;
 			}
 			break;
 		}
