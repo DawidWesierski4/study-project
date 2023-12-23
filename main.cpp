@@ -67,6 +67,7 @@ enum frame_types {
 enum transfer_types { MONEY, FUEL};
 enum negotiation_statuses {
 	ASK = FUEL + 1,
+	ASKED,
 	AKCEPTED,
 	REFUSED,
 	RENEGOTIATED
@@ -189,11 +190,8 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			char message1[256];
 			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-				if (frame.transfer_type == MONEY) 
-				sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", frame.transfer_value);
-				if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
-					negotiation_status = AKCEPTED;
-				}
+				if (frame.transfer_type == MONEY)
+					negotiation_status = ASK;
 				
 			}
 			break;
@@ -220,8 +218,8 @@ void InteractionInitialisation()
 	VW_cycle_time = clock();             // pomiar aktualnego czasu
 
 	// obiekty sieciowe typu multicast (z podaniem adresu WZR oraz numeru portu)
-	multi_reciv = new multicast_net("192.168.8.255", 10001);      // Object do odbioru ramek sieciowych
-	multi_send = new multicast_net("192.168.8.255", 10001);       // Object do wysy³ania ramek
+	multi_reciv = new multicast_net("192.168.1.255", 10001);      // Object do odbioru ramek sieciowych
+	multi_send = new multicast_net("192.168.1.255", 10001);       // Object do wysy³ania ramek
 
 	// uruchomienie watku obslugujacego odbior komunikatow
 	threadReciv = CreateThread(
@@ -241,6 +239,7 @@ void InteractionInitialisation()
 void VirtualWorldCycle()
 {
 	counter_of_simulations++;
+	char message1[256];
 
 	// obliczenie œredniego czasu pomiêdzy dwoma kolejnnymi symulacjami po to, by zachowaæ  fizycznych 
 	if (counter_of_simulations % 50 == 0)          // jeœli licznik cykli przekroczy³ pewn¹ wartoœæ, to
@@ -315,6 +314,13 @@ void VirtualWorldCycle()
 
 
 		my_vehicle->number_of_renewed_item = -1;
+	}
+
+	if (negotiation_status == ASKED) {
+		sprintf(message1, "", frame.transfer_value);
+		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
+			negotiation_status = AKCEPTED;
+		}
 	}
 
 }
