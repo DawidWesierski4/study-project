@@ -19,6 +19,7 @@ using namespace std;
 #include "net.h"
 
 volatile int negotiation_status = -1;
+volatile float negotiation_offer = 0;
 volatile int G_ID_receiver = 1;
 bool if_different_skills = true;     
 // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
@@ -61,7 +62,7 @@ extern float TransferSending(int ID_receiver, int transfer_type, float transfer_
 
 
 enum frame_types {
-	OBJECT_STATE, ITEM_TAKING, ITEM_RENEWAL, COLLISION, TRANSFER, NEGOTIATION
+	OBJECT_STATE, ITEM_TAKING, ITEM_RENEWAL, COLLISION, TRANSFER, NEGOTIATION, NEGOTIATION_ACCEPT, NEGOTIATION_REFUSE
 };
 
 enum transfer_types { MONEY, FUEL};
@@ -190,8 +191,10 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			char message1[256];
 			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-				if (frame.transfer_type == MONEY)
+				if (frame.transfer_type == MONEY) {
 					negotiation_status = ASKED;
+					negotiation_offer = frame.transfer_value;
+				}
 			}
 			break;
 		}
@@ -316,10 +319,17 @@ void VirtualWorldCycle()
 	}
 
 	if (negotiation_status == ASKED) {
-		sprintf(message1, "", frame.transfer_value);
+		sprintf(message1, "oferta gdzie dostajesz %f % monet ", negotiation_offer);
 		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 			negotiation_status = AKCEPTED;
+			frame.frame_type = NEGOTIATION_ACCEPT;
+			frame.transfer_value = negotiation_offer;
 		}
+		else {
+			negotiation_status = REFUSED;
+			frame.frame_type = NEGOTIATION_REFUSE;
+		}
+		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
 	}
 
 }
@@ -443,6 +453,11 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 
 	default:
 		return DefWindowProc(hwnd, message, w_param, l_param);
+	}
+
+	// Close the window if negotiation_status is refused
+	if (negotiation_status == REFUSED) {
+		DestroyWindow(hwnd);
 	}
 
 	return DefWindowProc(hwnd, message, w_param, l_param);
