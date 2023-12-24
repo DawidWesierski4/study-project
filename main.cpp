@@ -230,7 +230,8 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 
 		} // switch po typach ramek
 		// Opuszczenie ścieżki krytycznej / Release the Critical section
-		LeaveCriticalSection(&m_cs);               // wyjście ze ścieżki krytycznej
+\
+LeaveCriticalSection(&m_cs);               // wyjście ze ścieżki krytycznej
 	}  // while(1)
 	return 1;
 }
@@ -358,10 +359,12 @@ void VirtualWorldCycle()
 			negotiation_status = AKCEPTED;
 			frame.frame_type = NEGOTIATION_AKCEPT;
 			frame.transfer_value = negotiation_offer;
+			frame.iID_receiver = G_ID_receiver;
 			G_negotiation_value = negotiation_offer;
 		}
 		else {
 			negotiation_status = REFUSED;
+			frame.iID_receiver = G_ID_receiver;
 			frame.frame_type = NEGOTIATION_REFUSE;
 		}
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
