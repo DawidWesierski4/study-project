@@ -366,11 +366,12 @@ void VirtualWorldCycle()
 		}
 		else {
 			negotiation_status = REFUSED;
+			frame.transfer_value = negotiation_offer;
 			frame.iID_receiver = negotiation_reciever;
 			frame.frame_type = NEGOTIATION_REFUSE;
 		}
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
-		negotiation_status == -1;
+		negotiation_status = -1;
 	}
 
 	if (negotiation_status == AKCEPTED) {
@@ -438,7 +439,7 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 void Negotiate(int ID_receiver, int transfer_type, float transfer_value, HWND sub_window)
 {
 	if (!sub_window) {
-		G_ID_receiver = ID_receiver;
+		negotiation_reciever = ID_receiver;
 		sub_window = CreateWindowEx(0, "SubWindowClass", "NEGOCJACJE", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 			200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL),  &ID_receiver);
 	}
