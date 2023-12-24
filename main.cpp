@@ -27,7 +27,7 @@ bool if_different_skills = true;
 // zbierania gotówki i paliwa)
 
 FILE *f = fopen("vct_log.txt", "w");     // plik do zapisu informacji testowych
-
+HWND sub_window;
 MovableObject *my_vehicle;             // Object przypisany do tej aplikacji
 
 Terrain terrain;
@@ -328,7 +328,6 @@ void VirtualWorldCycle()
 			SetWindowText(main_window, text);
 			my_vehicle->taking_value = my_vehicle->taking_value * G_negotiation_value;
 			TransferSending(G_ID_receiver, MONEY, ((1 - G_negotiation_value) * my_vehicle->taking_value));
-			
 		}
 
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
@@ -443,7 +442,7 @@ void Negotiate(int ID_receiver, int transfer_type, float transfer_value, HWND su
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-HWND sub_window;
+
 HWND main_window;                   // uchwyt do okna aplikacji
 
 LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
