@@ -200,33 +200,34 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			break;
 		}
 
-		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
-		{
-			char message1[256];
-			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+		if (negotiation_status == ASK) {
+			case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 			{
-				if (frame.transfer_type == MONEY) {
-					negotiation_status = AKCEPTED;
-					negotiation_offer = frame.transfer_value;
-					G_ID_receiver = frame.iID_receiver;
-					G_negotiation_value = 1 - negotiation_offer;
+				char message1[256];
+				if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+				{
+					if (frame.transfer_type == MONEY) {
+						negotiation_status = AKCEPTED;
+						negotiation_offer = frame.transfer_value;
+						G_ID_receiver = frame.iID_receiver;
+						G_negotiation_value = 1 - negotiation_offer;
+					}
 				}
+				break;
 			}
-			break;
-		}
 
-		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
-		{
-			char message1[256];
-			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 			{
-				if (frame.transfer_type == MONEY) {
-					negotiation_status = REFUSED;
+				char message1[256];
+				if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+				{
+					if (frame.transfer_type == MONEY) {
+						negotiation_status = REFUSED;
+					}
 				}
+				break;
 			}
-			break;
 		}
-		
 		} // switch po typach ramek
 		// Opuszczenie ścieżki krytycznej / Release the Critical section
 		LeaveCriticalSection(&m_cs);               // wyjście ze ścieżki krytycznej
@@ -496,11 +497,6 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 
 	default:
 		return DefWindowProc(hwnd, message, w_param, l_param);
-	}
-
-	// Close the window if negotiation_status is refused
-	if (negotiation_status == REFUSED) {
-		DestroyWindow(hwnd);
 	}
 
 	return DefWindowProc(hwnd, message, w_param, l_param);
