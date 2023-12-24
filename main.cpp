@@ -200,34 +200,34 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			break;
 		}
 
-		if (negotiation_status == ASK) {
-			case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
-			{
-				char message1[256];
-				if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
-				{
-					if (frame.transfer_type == MONEY) {
-						negotiation_status = AKCEPTED;
-						negotiation_offer = frame.transfer_value;
-						G_ID_receiver = frame.iID_receiver;
-						G_negotiation_value = 1 - negotiation_offer;
-					}
-				}
-				break;
-			}
 
-			case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
+		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
+		{
+			char message1[256];
+			if (negotiation_status == ASK && frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-				char message1[256];
-				if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
-				{
-					if (frame.transfer_type == MONEY) {
-						negotiation_status = REFUSED;
-					}
+				if (frame.transfer_type == MONEY) {
+					negotiation_status = AKCEPTED;
+					negotiation_offer = frame.transfer_value;
+					G_ID_receiver = frame.iID_receiver;
+					G_negotiation_value = 1 - negotiation_offer;
 				}
-				break;
 			}
+			break;
 		}
+
+		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
+		{
+			char message1[256];
+			if (negotiation_status == ASK && frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			{
+				if (frame.transfer_type == MONEY) {
+					negotiation_status = REFUSED;
+				}
+			}
+			break;
+		}
+
 		} // switch po typach ramek
 		// Opuszczenie ścieżki krytycznej / Release the Critical section
 		LeaveCriticalSection(&m_cs);               // wyjście ze ścieżki krytycznej
