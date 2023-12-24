@@ -460,7 +460,7 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 	char message1[256];
 	Frame frame;
 	frame.frame_type = NEGOTIATION;
-	frame.iID_receiver = G_ID_receiver;
+	frame.iID_receiver = negotiation_reciever;
 	frame.transfer_type = MONEY;
 
 	switch (message) {
