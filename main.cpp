@@ -20,8 +20,9 @@ using namespace std;
 
 volatile int negotiation_status = -1;
 volatile float negotiation_offer = -1;
+volatile int negotiation_reciever = -1;
 volatile int G_ID_receiver = -1;
-volatile int G_negotiation_value = -1;
+volatile float G_negotiation_value = -1;
 bool if_different_skills = true;     
 // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
 // zbierania gotówki i paliwa)
@@ -195,11 +196,11 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 				if (frame.transfer_type == MONEY) {
 					negotiation_status = ASKED;
 					negotiation_offer = frame.transfer_value;
+					negotiation_reciever = frame.iID_receiver;
 				}
 			}
 			break;
 		}
-
 
 		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
@@ -359,12 +360,13 @@ void VirtualWorldCycle()
 			negotiation_status = AKCEPTED;
 			frame.frame_type = NEGOTIATION_AKCEPT;
 			frame.transfer_value = negotiation_offer;
-			frame.iID_receiver = G_ID_receiver;
+			frame.iID_receiver = negotiation_reciever;
+			G_ID_receiver = negotiation_reciever;
 			G_negotiation_value = negotiation_offer;
 		}
 		else {
 			negotiation_status = REFUSED;
-			frame.iID_receiver = G_ID_receiver;
+			frame.iID_receiver = negotiation_reciever;
 			frame.frame_type = NEGOTIATION_REFUSE;
 		}
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
