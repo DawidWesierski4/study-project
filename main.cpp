@@ -19,8 +19,9 @@ using namespace std;
 #include "net.h"
 
 volatile int negotiation_status = -1;
-volatile float negotiation_offer = 0;
-volatile int G_ID_receiver = 1;
+volatile float negotiation_offer = -1;
+volatile int G_ID_receiver = -1;
+volatile int G_negotiation_value = -1;
 bool if_different_skills = true;     
 // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
 // zbierania gotówki i paliwa)
@@ -62,7 +63,7 @@ extern float TransferSending(int ID_receiver, int transfer_type, float transfer_
 
 
 enum frame_types {
-	OBJECT_STATE, ITEM_TAKING, ITEM_RENEWAL, COLLISION, TRANSFER, NEGOTIATION, NEGOTIATION_ACCEPT, NEGOTIATION_REFUSE
+	OBJECT_STATE, ITEM_TAKING, ITEM_RENEWAL, COLLISION, TRANSFER, NEGOTIATION, NEGOTIATION_AKCEPT, NEGOTIATION_REFUSE
 };
 
 enum transfer_types { MONEY, FUEL};
@@ -198,6 +199,33 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			}
 			break;
 		}
+
+		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
+		{
+			char message1[256];
+			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			{
+				if (frame.transfer_type == MONEY) {
+					negotiation_status = AKCEPTED;
+					negotiation_offer = frame.transfer_value;
+					G_ID_receiver = frame.iID_receiver;
+					G_negotiation_value = 1 - negotiation_offer;
+				}
+			}
+			break;
+		}
+
+		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
+		{
+			char message1[256];
+			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			{
+				if (frame.transfer_type == MONEY) {
+					negotiation_status = REFUSED;
+				}
+			}
+			break;
+		}
 		
 		} // switch po typach ramek
 		// Opuszczenie ścieżki krytycznej / Release the Critical section
@@ -269,12 +297,8 @@ void VirtualWorldCycle()
 		frame.iID_receiver = my_vehicle->iID_collider;
 		frame.vdV_collision = my_vehicle->vdV_collision;
 		frame.iID = my_vehicle->iID;
+
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
-
-		char text[128];
-		sprintf(par_view.inscription2, "Kolizja_z_obiektem_o_ID = %d", my_vehicle->iID_collider);
-		//SetWindowText(main_window,text);
-
 		my_vehicle->iID_collider = -1;
 	}
 
@@ -297,6 +321,16 @@ void VirtualWorldCycle()
 		frame.item_number = my_vehicle->number_of_taking_item;
 		frame.state = my_vehicle->State();
 		frame.iID = my_vehicle->iID;
+
+		if (G_ID_receiver != -1) {
+			char text[128];
+			sprintf(par_view.inscription2, "W_grupie_z = %d", G_ID_receiver);
+			SetWindowText(main_window, text);
+			my_vehicle->taking_value = my_vehicle->taking_value * G_negotiation_value;
+			TransferSending(G_ID_receiver, MONEY, ((1 - G_negotiation_value) * my_vehicle->taking_value));
+			
+		}
+
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
 
 		sprintf(par_view.inscription2, "Wziecie_przedmiotu_o_wartosci_ %f", my_vehicle->taking_value);
@@ -322,14 +356,36 @@ void VirtualWorldCycle()
 		sprintf(message1, "oferta gdzie dostajesz %f % monet ", negotiation_offer);
 		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 			negotiation_status = AKCEPTED;
-			frame.frame_type = NEGOTIATION_ACCEPT;
+			frame.frame_type = NEGOTIATION_AKCEPT;
 			frame.transfer_value = negotiation_offer;
+			G_negotiation_value = negotiation_offer;
 		}
 		else {
 			negotiation_status = REFUSED;
 			frame.frame_type = NEGOTIATION_REFUSE;
 		}
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+		negotiation_status == -1;
+	}
+
+	if (negotiation_status == AKCEPTED) {
+		if (sub_window) {
+			DestroyWindow(sub_window);
+			sub_window = NULL;
+		}
+		sprintf(message1, "Oferta %.2f zaakceptowana", frame.transfer_value);
+		MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
+		negotiation_status = -1;
+	}
+
+	if (negotiation_status == REFUSED) {
+		if (sub_window) {
+			DestroyWindow(sub_window);
+			sub_window = NULL;
+		}
+		sprintf(message1, "Oferta %.2f odrzucaona", frame.transfer_value);
+		MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
+		negotiation_status = -1;
 	}
 
 }
@@ -426,18 +482,6 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 				if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 					negotiation_status = ASK;
 					int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
-
-
-					while (negotiation_status != ASK) {}
-
-					if (negotiation_status == AKCEPTED) {
-						sprintf(message1, "ZAKCEPTOWAŁ", moneyValue);
-						MessageBox(hwnd, message1, "zakceptował", MB_OK);
-					}
-					else if (negotiation_status == REFUSED) {
-						sprintf(message1, "ODRZUCIŁ", moneyValue);
-						MessageBox(hwnd, message1, "nie zakceptował cymbał", MB_OK);
-					}
 				}
 			} else {
 				sprintf(message1, "Wartość: %.2f jest zbyt wysoka", moneyValue);
