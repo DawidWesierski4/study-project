@@ -436,12 +436,12 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 	return frame.transfer_value;
 }
 
-void Negotiate(int ID_receiver, int transfer_type, float transfer_value, HWND sub_window)
+void Negotiate(int ID_selected, int transfer_type, float transfer_value, HWND sub_window)
 {
 	if (!sub_window) {
-		negotiation_reciever = ID_receiver;
+		negotiation_reciever = ID_selected;
 		sub_window = CreateWindowEx(0, "SubWindowClass", "NEGOCJACJE", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-			200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL),  &ID_receiver);
+			200, 200, 400, 300, main_window, NULL, GetModuleHandle(NULL),  &ID_selected);
 	}
 }
 
@@ -453,12 +453,13 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HWND main_window;                   // uchwyt do okna aplikacji
 
 LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
-	static HWND edit_control;  // Static to persist between messages
+	static HWND edit_control;
 
 	char moneyBuffer[256];
 	float moneyValue;
 	char message1[256];
 	Frame frame;
+	frame.iID = my_vehicle->iID;
 	frame.frame_type = NEGOTIATION;
 	frame.iID_receiver = negotiation_reciever;
 	frame.transfer_type = MONEY;
