@@ -207,12 +207,12 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			char message1[256];
 			if (negotiation_status == ASK && frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-				if (frame.transfer_type == MONEY) {
+
 					negotiation_status = AKCEPTED;
 					negotiation_offer = frame.transfer_value;
 					G_ID_receiver = frame.iID_receiver;
 					G_negotiation_value = 1 - negotiation_offer;
-				}
+
 			}
 			break;
 		}
@@ -222,9 +222,9 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			char message1[256];
 			if (negotiation_status == ASK && frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-				if (frame.transfer_type == MONEY) {
+
 					negotiation_status = REFUSED;
-				}
+
 			}
 			break;
 		}
