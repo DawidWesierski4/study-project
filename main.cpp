@@ -196,7 +196,7 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 				if (frame.transfer_type == MONEY) {
 					negotiation_status = ASKED;
 					negotiation_offer = frame.transfer_value;
-					negotiation_reciever = frame.iID_receiver;
+					negotiation_reciever = frame.iID;
 				}
 			}
 			break;
@@ -355,7 +355,7 @@ void VirtualWorldCycle()
 	}
 
 	if (negotiation_status == ASKED) {
-		sprintf(message1, "oferta gdzie dostajesz %f % monet ", negotiation_offer);
+		sprintf(message1, "oferta gdzie dostajesz %f \% monet ", negotiation_offer);
 		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 			negotiation_status = AKCEPTED;
 			frame.frame_type = NEGOTIATION_AKCEPT;
