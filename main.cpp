@@ -360,6 +360,7 @@ void VirtualWorldCycle()
 		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 			frame.frame_type = NEGOTIATION_AKCEPT;
 			frame.transfer_value = negotiation_offer;
+			frame.frame_type = MONEY;
 			frame.iID_receiver = negotiation_reciever;
 			G_ID_receiver = negotiation_reciever;
 			G_negotiation_value = negotiation_offer;
@@ -367,6 +368,7 @@ void VirtualWorldCycle()
 		else {
 			frame.frame_type = NEGOTIATION_REFUSE;
 			frame.transfer_value = negotiation_offer;
+			frame.frame_type = MONEY;
 			frame.iID_receiver = negotiation_reciever;
 		}
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
