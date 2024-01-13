@@ -205,14 +205,12 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (negotiation_status == ASK && frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			if (negotiation_status == ASK && frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-
 					negotiation_status = AKCEPTED;
 					negotiation_offer = frame.transfer_value;
-					G_ID_receiver = frame.iID_receiver;
+					G_ID_receiver = frame.iID;
 					G_negotiation_value = 1 - negotiation_offer;
-
 			}
 			break;
 		}
@@ -220,11 +218,9 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (negotiation_status == ASK && frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			if (negotiation_status == ASK && frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-
 					negotiation_status = REFUSED;
-
 			}
 			break;
 		}
@@ -380,8 +376,8 @@ void VirtualWorldCycle()
 			DestroyWindow(sub_window);
 			sub_window = NULL;
 		}
-		sprintf(message1, "Oferta %.2f zaakceptowana", frame.transfer_value);
-		MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
+		sprintf(message1, "Oferta %.2f zaakceptowana", negotiation_offer);
+			MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
 		negotiation_status = -1;
 	}
 
@@ -391,7 +387,7 @@ void VirtualWorldCycle()
 			sub_window = NULL;
 		}
 		sprintf(message1, "Oferta %.2f odrzucaona", frame.transfer_value);
-		MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
+			MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
 		negotiation_status = -1;
 	}
 
