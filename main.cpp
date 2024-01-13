@@ -247,8 +247,8 @@ void InteractionInitialisation()
 	VW_cycle_time = clock();             // pomiar aktualnego czasu
 
 	// obiekty sieciowe typu multicast (z podaniem adresu WZR oraz numeru portu)
-	multi_reciv = new multicast_net("192.168.1.255", 10001);      // Object do odbioru ramek sieciowych
-	multi_send = new multicast_net("192.168.1.255", 10001);       // Object do wysy³ania ramek
+	multi_reciv = new multicast_net("192.168.8.255", 10001);      // Object do odbioru ramek sieciowych
+	multi_send = new multicast_net("192.168.8.255", 10001);       // Object do wysy³ania ramek
 
 	// uruchomienie watku obslugujacego odbior komunikatow
 	threadReciv = CreateThread(
