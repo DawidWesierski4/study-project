@@ -364,7 +364,6 @@ void VirtualWorldCycle()
 		else if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNOCANCEL) == IDNO) {
 			if (sub_window) {
 				DestroyWindow(sub_window);
-				sub_window = NULL;
 			}
 			Negotiate(negotiation_reciever, MONEY, 100, sub_window);
 		}
