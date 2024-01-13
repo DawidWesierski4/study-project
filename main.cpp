@@ -205,23 +205,23 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
-			{
+			//if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			//{
 					negotiation_status = AKCEPTED;
 					negotiation_offer = frame.transfer_value;
 					G_ID_receiver = frame.iID;
 					G_negotiation_value = 1 - negotiation_offer;
-			}
+			//}
 			break;
 		}
 
 		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
-			{
+			//if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			//{
 					negotiation_status = REFUSED;
-			}
+			//}
 			break;
 		}
 
@@ -351,8 +351,9 @@ void VirtualWorldCycle()
 	}
 
 	if (negotiation_status == ASKED) {
-		sprintf(message1, "oferta gdzie dostajesz %f \% monet ", negotiation_offer);
+		Frame frame;
 		frame.iID = my_vehicle->iID;
+		sprintf(message1, "oferta gdzie dostajesz %f \% monet ", negotiation_offer);
 		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 			frame.frame_type = NEGOTIATION_AKCEPT;
 			frame.transfer_value = negotiation_offer;
@@ -480,7 +481,7 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 			GetWindowText(edit_control, moneyBuffer, sizeof(moneyBuffer));
 			moneyValue = atof(moneyBuffer);
 
-			if (moneyValue < 1) {
+			if (moneyValue < 1 && moneyValue > 0) {
 				frame.transfer_value = moneyValue;
 				sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", moneyValue);
 				if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
