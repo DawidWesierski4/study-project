@@ -69,8 +69,8 @@ enum frame_types {
 
 enum transfer_types { MONEY, FUEL};
 enum negotiation_statuses {
-	ASK = FUEL + 1,
-	ASKED,
+	ASK = FUEL + 1, // we are asking
+	ASKED , // we have been asked
 	AKCEPTED,
 	REFUSED,
 	RENEGOTIATED
@@ -205,7 +205,7 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (negotiation_status == ASK && frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
 					negotiation_status = AKCEPTED;
 					negotiation_offer = frame.transfer_value;
@@ -218,7 +218,7 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (negotiation_status == ASK && frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
 					negotiation_status = REFUSED;
 			}
