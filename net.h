@@ -64,5 +64,5 @@ public:
 
 };
 
-
+void Negotiate(int ID_selected, int transfer_type, float transfer_value, HWND sub_window);
 #endif
