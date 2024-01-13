@@ -19,6 +19,8 @@ struct ObjectState
 	float amount_of_fuel;
 	int iID_owner;
 	int if_autonomous;
+	//volatile float G_negotiation_send_fuel = -1;
+	//volatile int G_negotiation_send_money = -1;
 };
 
 
@@ -267,3 +269,4 @@ public:
 	void DeleteObjectsFromSectors(MovableObject *ob);
 	long ObjectsInRadius(MovableObject*** wsk_ob, Vector3 pol, float radius);
 };
+

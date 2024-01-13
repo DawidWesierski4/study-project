@@ -20,9 +20,14 @@ using namespace std;
 
 volatile int negotiation_status = -1;
 volatile float negotiation_offer = -1;
+volatile int negotiation_type = -1;
 volatile int negotiation_reciever = -1;
 volatile int G_ID_receiver = -1;
-volatile float G_negotiation_value = -1;
+volatile float G_negotiation_value_fuel = -1;
+volatile float G_negotiation_value_money = -1;
+volatile float G_negotiation_send_fuel = -1;
+volatile int G_negotiation_send_money = -1;
+
 bool if_different_skills = true;     
 // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
 // zbierania gotówki i paliwa)
@@ -195,6 +200,13 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			{
 				if (frame.transfer_type == MONEY) {
 					negotiation_status = ASKED;
+					negotiation_type = frame.transfer_type;
+					negotiation_offer = frame.transfer_value;
+					negotiation_reciever = frame.iID;
+				}
+				else if (frame.transfer_type == FUEL) {
+					negotiation_status = ASKED;
+					negotiation_type = frame.transfer_type;
 					negotiation_offer = frame.transfer_value;
 					negotiation_reciever = frame.iID;
 				}
@@ -210,7 +222,10 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 					negotiation_status = AKCEPTED;
 					negotiation_offer = frame.transfer_value;
 					G_ID_receiver = frame.iID;
-					G_negotiation_value = 1 - negotiation_offer;
+					if (frame.transfer_type == MONEY)
+						G_negotiation_value_money = 1 - negotiation_offer;
+					else if (frame.transfer_type == FUEL)
+						G_negotiation_value_fuel = 1 - negotiation_offer;
 			}
 			break;
 		}
@@ -220,7 +235,9 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 			char message1[256];
 			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
-					negotiation_status = REFUSED;
+				negotiation_offer = -1;
+				negotiation_reciever = -1;
+				negotiation_status = -1;
 			}
 			break;
 		}
@@ -321,12 +338,17 @@ void VirtualWorldCycle()
 		frame.state = my_vehicle->State();
 		frame.iID = my_vehicle->iID;
 
-		if (G_ID_receiver != -1) {
+		if (G_negotiation_send_fuel != -1 ) {
 			char text[128];
 			sprintf(par_view.inscription2, "W_grupie_z = %d", G_ID_receiver);
-			SetWindowText(main_window, text);
-			my_vehicle->taking_value = my_vehicle->taking_value * G_negotiation_value;
-			TransferSending(G_ID_receiver, MONEY, ((1 - G_negotiation_value) * my_vehicle->taking_value));
+			TransferSending(G_ID_receiver, FUEL, G_negotiation_send_fuel);
+			G_negotiation_send_fuel = -1;
+		}
+		if (G_negotiation_send_money != -1) {
+			char text[128];
+			sprintf(par_view.inscription2, "W_grupie_z = %d", G_ID_receiver);
+			TransferSending(G_ID_receiver, MONEY, G_negotiation_send_money);
+			G_negotiation_send_money = -1;
 		}
 
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
@@ -357,10 +379,14 @@ void VirtualWorldCycle()
 		int RSP = MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNOCANCEL);
 		if (RSP == IDYES) {
 			frame.frame_type = NEGOTIATION_AKCEPT;
+			frame.transfer_type = negotiation_type;
 			frame.transfer_value = negotiation_offer;
 			frame.iID_receiver = negotiation_reciever;
 			G_ID_receiver = negotiation_reciever;
-			G_negotiation_value = negotiation_offer;
+			if (negotiation_type == FUEL)
+				G_negotiation_value_fuel = negotiation_offer;
+			else if (negotiation_type == MONEY)
+				G_negotiation_value_money = negotiation_offer;
 		}
 		else if (RSP == IDNO) {
 			negotiation_status = ASK;
@@ -368,12 +394,10 @@ void VirtualWorldCycle()
 				DestroyWindow(sub_window);
 				sub_window = NULL;
 			}
-			Negotiate(negotiation_reciever, MONEY, 100);
+			Negotiate(negotiation_reciever, negotiation_type, 100);
 		}
 		else {
 			frame.frame_type = NEGOTIATION_REFUSE;
-			frame.transfer_value = negotiation_offer;
-			frame.iID_receiver = negotiation_reciever;
 		}
 		int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
 		negotiation_status = -1;
@@ -466,13 +490,13 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 
 	char moneyBuffer[256];
 	float moneyValue;
+	float fuelValue;
 	char message1[256];
 	Frame frame;
 
 	frame.iID = my_vehicle->iID;
 	frame.frame_type = NEGOTIATION;
 	frame.iID_receiver = negotiation_reciever;
-	frame.transfer_type = MONEY;
 
 	switch (message) {
 	case WM_CREATE:
@@ -496,6 +520,7 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 				moneyValue = atof(moneyBuffer);
 
 				if (moneyValue < 1 && moneyValue > 0) {
+					frame.transfer_type = MONEY;
 					frame.transfer_value = moneyValue;
 					sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", moneyValue);
 					if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
@@ -505,6 +530,24 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 				}
 				else {
 					sprintf(message1, "Wartość: %.2f jest zbyt wysoka", moneyValue);
+					MessageBox(hwnd, message1, "za wysoko 0 - 1", MB_OK);
+				}
+			}
+			if (l_param == (LPARAM)type_fuel) {
+				GetWindowText(edit_control_money, moneyBuffer, sizeof(moneyBuffer));
+				fuelValue = atof(moneyBuffer);
+
+				if (moneyValue < 1 && moneyValue > 0) {
+					frame.transfer_type = FUEL;
+					frame.transfer_value = fuelValue;
+					sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", fuelValue);
+					if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
+						negotiation_status = ASK;
+						int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+					}
+				}
+				else {
+					sprintf(message1, "Wartość: %.2f jest zbyt wysoka", fuelValue);
 					MessageBox(hwnd, message1, "za wysoko 0 - 1", MB_OK);
 				}
 			}

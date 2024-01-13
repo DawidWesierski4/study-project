@@ -19,7 +19,6 @@ using namespace std;
 #endif
 #include "graphics.h"
 
-
 //#include "vector3D.h"
 extern FILE *f;
 extern HWND main_window;
@@ -28,6 +27,19 @@ extern ViewParameters par_view;
 extern map<int, MovableObject*> network_vehicles;
 extern CRITICAL_SECTION m_cs;
 
+extern  float G_negotiation_send_fuel = -1;
+extern  int G_negotiation_send_money = -1;
+extern  float G_negotiation_value = -1;
+extern float G_negotiation_value_fuel = -1;
+extern float G_negotiation_value_money = -1;
+
+//volatile int negotiation_status = -1;
+//volatile float negotiation_offer = -1;
+//volatile int negotiation_reciever = -1;
+//volatile int G_ID_receiver = -1;
+//volatile float G_negotiation_value = -1;
+//volatile float G_negotiation_send_fuel = -1;
+//volatile int G_negotiation_send_money = -1;
 
 extern bool terrain_edition_mode;
 //extern Terrain terrain;
@@ -699,6 +711,9 @@ void MovableObject::Simulation(float dt)          // obliczenie nowego stanu na 
 				if (mozna_wziac)
 				{
 					taking_value = (float)value*money_collection_skills;
+					if (G_negotiation_value_money != -1) {
+						G_negotiation_send_money = taking_value - (taking_value * G_negotiation_value_money);
+					}
 					state.money += (long)taking_value;
 				}
 
@@ -708,6 +723,9 @@ void MovableObject::Simulation(float dt)          // obliczenie nowego stanu na 
 			{
 				taking_value = (float)value*fuel_collection_skills;
 				state.amount_of_fuel += taking_value;
+				if (G_negotiation_value_fuel != -1) {
+					G_negotiation_send_fuel = taking_value - (taking_value * G_negotiation_value_fuel);
+				}
 				//sprintf(inscription2,"Wziecie_paliwa_w_ilosci_ %d",value);
 			}
 
