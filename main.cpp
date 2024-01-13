@@ -205,7 +205,7 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_AKCEPT:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
 					negotiation_status = AKCEPTED;
 					negotiation_offer = frame.transfer_value;
@@ -218,7 +218,7 @@ DWORD WINAPI ReceiveThreadFunction(void *ptr)
 		case NEGOTIATION_REFUSE:                       // frame informuj¹ca o przelewie pieniê¿nym lub przekazaniu towaru    
 		{
 			char message1[256];
-			if (frame.iID == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
+			if (frame.iID_receiver == my_vehicle->iID)  // ID pojazdu, ktory otrzymal przelew zgadza siê z moim ID 
 			{
 					negotiation_status = REFUSED;
 			}
