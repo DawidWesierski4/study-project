@@ -363,7 +363,7 @@ void VirtualWorldCycle()
 			G_negotiation_value = negotiation_offer;
 		}
 		else if (RSP == IDNO) {
-			negotiation_status == ASK;
+			negotiation_status = ASK;
 			if (sub_window) {
 				DestroyWindow(sub_window);
 				sub_window = NULL;
