@@ -459,12 +459,16 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HWND main_window;                   // uchwyt do okna aplikacji
 
 LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
-	static HWND edit_control;
+	static HWND edit_control_money;
+	static HWND edit_control_fuel;
+	static HWND type_money;
+	static HWND type_fuel;
 
 	char moneyBuffer[256];
 	float moneyValue;
 	char message1[256];
 	Frame frame;
+
 	frame.iID = my_vehicle->iID;
 	frame.frame_type = NEGOTIATION;
 	frame.iID_receiver = negotiation_reciever;
@@ -474,31 +478,35 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 	case WM_CREATE:
 		// Create and show the money input dialog when a command is received (e.g., button click)
 		if (negotiation_status == -1) {
-			edit_control = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
-			CreateWindow("BUTTON", "Negocjacuj", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+			edit_control_money = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
+			type_money = CreateWindow("BUTTON", "MONEY", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+			type_fuel = CreateWindow("BUTTON", "FUEL", WS_VISIBLE | WS_CHILD, 110, 40, 80, 30, hwnd, (HMENU)3, NULL, NULL);
 		}
 		else if (negotiation_status == ASK) {
-			edit_control = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
-			CreateWindow("BUTTON", "Renegocjuj", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+			edit_control_money = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 10, 10, 100, 20, hwnd, (HMENU)2, NULL, NULL);
+			type_money = CreateWindow("BUTTON", "MONEY - r", WS_VISIBLE | WS_CHILD, 10, 40, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+			type_fuel = CreateWindow("BUTTON", "FUEL - r ", WS_VISIBLE | WS_CHILD, 110, 40, 80, 30, hwnd, (HMENU)3, NULL, NULL);
 		}
 		break;
 
 	case WM_COMMAND:
 		if (LOWORD(w_param) == 1) {
-			// Get the entered value from the edit control
-			GetWindowText(edit_control, moneyBuffer, sizeof(moneyBuffer));
-			moneyValue = atof(moneyBuffer);
+			if (l_param == (LPARAM)type_money) {
+				GetWindowText(edit_control_money, moneyBuffer, sizeof(moneyBuffer));
+				moneyValue = atof(moneyBuffer);
 
-			if (moneyValue < 1 && moneyValue > 0) {
-				frame.transfer_value = moneyValue;
-				sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", moneyValue);
-				if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
-					negotiation_status = ASK;
-					int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+				if (moneyValue < 1 && moneyValue > 0) {
+					frame.transfer_value = moneyValue;
+					sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", moneyValue);
+					if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
+						negotiation_status = ASK;
+						int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
+					}
 				}
-			} else {
-				sprintf(message1, "Wartość: %.2f jest zbyt wysoka", moneyValue);
-				MessageBox(hwnd, message1, "za wysoko 0 - 1", MB_OK);
+				else {
+					sprintf(message1, "Wartość: %.2f jest zbyt wysoka", moneyValue);
+					MessageBox(hwnd, message1, "za wysoko 0 - 1", MB_OK);
+				}
 			}
 		}
 		break;
