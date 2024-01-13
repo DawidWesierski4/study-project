@@ -18,15 +18,15 @@ using namespace std;
 #include "graphics.h"
 #include "net.h"
 
-volatile int negotiation_status = -1;
-volatile float negotiation_offer = -1;
-volatile int negotiation_type = -1;
-volatile int negotiation_reciever = -1;
-volatile int G_ID_receiver = -1;
-volatile float G_negotiation_value_fuel = -1;
-volatile float G_negotiation_value_money = -1;
-volatile float G_negotiation_send_fuel = -1;
-volatile int G_negotiation_send_money = -1;
+extern int negotiation_status;
+extern float negotiation_offer;
+extern int negotiation_type;
+extern int negotiation_reciever;
+extern int G_ID_receiver;
+extern float G_negotiation_value_fuel;
+extern float G_negotiation_value_money;
+extern float G_negotiation_send_fuel;
+extern int G_negotiation_send_money;
 
 bool if_different_skills = true;     
 // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
@@ -481,6 +481,16 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
 HWND main_window;                   // uchwyt do okna aplikacji
+
+int negotiation_status = -1;
+float negotiation_offer = -1;
+int negotiation_type = -1;
+int negotiation_reciever = -1;
+int G_ID_receiver = -1;
+float G_negotiation_value_fuel = -1;
+float G_negotiation_value_money = -1;
+float G_negotiation_send_fuel = -1;
+int G_negotiation_send_money = -1;
 
 LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
 	static HWND edit_control_money;
