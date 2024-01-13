@@ -368,7 +368,7 @@ void VirtualWorldCycle()
 				DestroyWindow(sub_window);
 				sub_window = NULL;
 			}
-			Negotiate(negotiation_reciever, MONEY, 100, sub_window);
+			Negotiate(negotiation_reciever, MONEY, 100);
 		}
 		else {
 			frame.frame_type = NEGOTIATION_REFUSE;
@@ -442,7 +442,7 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 	return frame.transfer_value;
 }
 
-void Negotiate(int ID_selected, int transfer_type, float transfer_value, HWND sub_window)
+void Negotiate(int ID_selected, int transfer_type, float transfer_value)
 {
 	if (!sub_window) {
 		negotiation_reciever = ID_selected;
@@ -505,7 +505,6 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 
 	case WM_DESTROY:
 		DestroyWindow(hwnd);
-
 		break;
 
 	default:
@@ -937,7 +936,7 @@ void MessagesHandling(UINT message_type, WPARAM wParam, LPARAM lParam)
 				{
 					MovableObject* ob = it->second;
 					if (ob->if_selected)
-						Negotiate(ob->iID, MONEY, 100, sub_window);
+						Negotiate(ob->iID, MONEY, 100);
 		
 				}
 			}
