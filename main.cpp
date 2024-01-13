@@ -354,12 +354,19 @@ void VirtualWorldCycle()
 		Frame frame;
 		frame.iID = my_vehicle->iID;
 		sprintf(message1, "oferta gdzie dostajesz %f \% monet ", negotiation_offer);
-		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
+		if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNOCANCEL) == IDYES) {
 			frame.frame_type = NEGOTIATION_AKCEPT;
 			frame.transfer_value = negotiation_offer;
 			frame.iID_receiver = negotiation_reciever;
 			G_ID_receiver = negotiation_reciever;
 			G_negotiation_value = negotiation_offer;
+		}
+		else if (MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNOCANCEL) == IDNO) {
+			if (sub_window) {
+				DestroyWindow(sub_window);
+				sub_window = NULL;
+			}
+			Negotiate(negotiation_reciever, MONEY, 100, sub_window);
 		}
 		else {
 			frame.frame_type = NEGOTIATION_REFUSE;
@@ -377,6 +384,7 @@ void VirtualWorldCycle()
 		}
 		sprintf(message1, "Oferta %.2f zaakceptowana", negotiation_offer);
 			MessageBox(main_window, message1, "NEGOCJACJA", MB_OK);
+
 		negotiation_status = -1;
 	}
 
