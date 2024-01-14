@@ -18,15 +18,15 @@ using namespace std;
 #include "graphics.h"
 #include "net.h"
 
-extern int negotiation_status;
-extern float negotiation_offer;
-extern int negotiation_type;
-extern int negotiation_reciever;
-extern int G_ID_receiver;
-extern float G_negotiation_value_fuel;
-extern float G_negotiation_value_money;
-extern float G_negotiation_send_fuel;
-extern int G_negotiation_send_money;
+int negotiation_status = -1;
+float negotiation_offer = -1;
+int negotiation_type = -1;
+int negotiation_reciever = -1;
+int G_ID_receiver = -1;
+float G_negotiation_value_fuel = -1;
+float G_negotiation_value_money = -1;
+float G_negotiation_send_fuel = -1;
+int G_negotiation_send_money =-1;
 
 bool if_different_skills = true;     
 // czy zró¿nicowanie umiejêtnoœci (dla ka¿dego pojazdu losowane s¹ umiejêtnoœci
@@ -264,8 +264,8 @@ void InteractionInitialisation()
 	VW_cycle_time = clock();             // pomiar aktualnego czasu
 
 	// obiekty sieciowe typu multicast (z podaniem adresu WZR oraz numeru portu)
-	multi_reciv = new multicast_net("192.168.8.255", 10001);      // Object do odbioru ramek sieciowych
-	multi_send = new multicast_net("192.168.8.255", 10001);       // Object do wysy³ania ramek
+	multi_reciv = new multicast_net("192.168.0.101", 10002);      // Object do odbioru ramek sieciowych
+	multi_send = new multicast_net("192.168.0.101", 10001);       // Object do wysy³ania ramek
 
 	// uruchomienie watku obslugujacego odbior komunikatow
 	threadReciv = CreateThread(
@@ -482,16 +482,6 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 HWND main_window;                   // uchwyt do okna aplikacji
 
-int negotiation_status = -1;
-float negotiation_offer = -1;
-int negotiation_type = -1;
-int negotiation_reciever = -1;
-int G_ID_receiver = -1;
-float G_negotiation_value_fuel = -1;
-float G_negotiation_value_money = -1;
-float G_negotiation_send_fuel = -1;
-int G_negotiation_send_money = -1;
-
 LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param) {
 	static HWND edit_control_money;
 	static HWND edit_control_fuel;
@@ -543,14 +533,16 @@ LRESULT CALLBACK SubWindowProc(HWND hwnd, UINT message, WPARAM w_param, LPARAM l
 					MessageBox(hwnd, message1, "za wysoko 0 - 1", MB_OK);
 				}
 			}
+		}
+		if (LOWORD(w_param) == 3) {
 			if (l_param == (LPARAM)type_fuel) {
 				GetWindowText(edit_control_money, moneyBuffer, sizeof(moneyBuffer));
 				fuelValue = atof(moneyBuffer);
 
-				if (moneyValue < 1 && moneyValue > 0) {
+				if (fuelValue < 1 && fuelValue > 0) {
 					frame.transfer_type = FUEL;
 					frame.transfer_value = fuelValue;
-					sprintf(message1, "Wysłać propozycję podziału: %.2f pieniedzy dla wskazanego pojazdu ?", fuelValue);
+					sprintf(message1, "Wysłać propozycję podziału: %.2f paliwa dla wskazanego pojazdu ?", fuelValue);
 					if (MessageBox(hwnd, message1, "Negocjowana wartość", MB_YESNO) == IDYES) {
 						negotiation_status = ASK;
 						int iRozmiar = multi_send->send((char*)&frame, sizeof(Frame));
@@ -991,13 +983,16 @@ void MessagesHandling(UINT message_type, WPARAM wParam, LPARAM lParam)
 		}
 		case 'P':
 		{
+			// G_negotiation_value_money = 0.7;
 			for (map<int, MovableObject*>::iterator it = network_vehicles.begin(); it != network_vehicles.end(); ++it)
 			{
 				if (it->second)
 				{
 					MovableObject* ob = it->second;
 					if (ob->if_selected)
+						sub_window = NULL;
 						Negotiate(ob->iID, MONEY, 100);
+
 		
 				}
 			}

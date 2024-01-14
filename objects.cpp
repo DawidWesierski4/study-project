@@ -27,11 +27,11 @@ extern ViewParameters par_view;
 extern map<int, MovableObject*> network_vehicles;
 extern CRITICAL_SECTION m_cs;
 
-extern  float G_negotiation_send_fuel = -1;
-extern  int G_negotiation_send_money = -1;
-extern  float G_negotiation_value = -1;
-extern float G_negotiation_value_fuel = -1;
-extern float G_negotiation_value_money = -1;
+extern float G_negotiation_send_fuel;
+extern int G_negotiation_send_money;
+extern float G_negotiation_value;
+extern float G_negotiation_value_fuel;
+extern float G_negotiation_value_money;
 
 //volatile int negotiation_status = -1;
 //volatile float negotiation_offer = -1;
