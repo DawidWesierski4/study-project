@@ -264,8 +264,13 @@ void InteractionInitialisation()
 	VW_cycle_time = clock();             // pomiar aktualnego czasu
 
 	// obiekty sieciowe typu multicast (z podaniem adresu WZR oraz numeru portu)
+<<<<<<< Updated upstream
 	multi_reciv = new multicast_net("192.168.0.101", 10002);      // Object do odbioru ramek sieciowych
 	multi_send = new multicast_net("192.168.0.101", 10001);       // Object do wysy³ania ramek
+=======
+	multi_reciv = new multicast_net("192.168.0.101", 10001);      // Object do odbioru ramek sieciowych
+	multi_send = new multicast_net("192.168.0.101", 10002);       // Object do wysy³ania ramek
+>>>>>>> Stashed changes
 
 	// uruchomienie watku obslugujacego odbior komunikatow
 	threadReciv = CreateThread(
@@ -375,7 +380,11 @@ void VirtualWorldCycle()
 	if (negotiation_status == ASKED) {
 		Frame frame;
 		frame.iID = my_vehicle->iID;
-		sprintf(message1, "oferta gdzie dostajesz %f \% monet ", negotiation_offer);
+		if (negotiation_type == FUEL)
+			sprintf(message1, "oferta gdzie dostajesz %f paliwa", negotiation_offer);
+		else
+			sprintf(message1, "oferta gdzie dostajesz %f monet ", negotiation_offer);
+		
 		int RSP = MessageBox(main_window, message1, "Negocjowana wartość", MB_YESNOCANCEL);
 		if (RSP == IDYES) {
 			frame.frame_type = NEGOTIATION_AKCEPT;
